@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <div class="brand"><img src="icons/icon48.png" width="22" height="22" alt=""> VideoGrab</div>
+    <button id="clear" title="清空列表">清空</button>
+  </header>
+  <p class="hint">支持后台持续下载与断点续传，开始下载后可随时切换页面或关闭弹窗。</p>
+  <div id="status"></div>
+  <ul id="list"></ul>
+  <div id="empty" class="empty" hidden>
+    当前页面暂未探测到视频。<br>
+    在页面上播放视频后，重新打开此弹窗即可。
+  </div>
+  <footer>下载文件将统一转为 MP4 保存至浏览器的下载目录中。</footer>
+  <script src="popup.js"></script>
+</body>
+</html>
