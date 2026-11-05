@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VideoGrab 桌面版</title>
+<style>
+  :root { --bg:#0f1419; --card:#1a222c; --line:#2b3644; --txt:#e8eef4; --dim:#8fa1b3; --acc:#2ecc71; --err:#e74c3c; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.55 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif; }
+  .wrap { max-width:760px; margin:0 auto; padding:28px 18px 60px; }
+  h1 { font-size:24px; margin:0 0 4px; }
+  .sub { color:var(--dim); margin:0 0 22px; font-size:13.5px; }
+  .row { display:flex; gap:10px; }
+  input[type=text] { flex:1; background:var(--card); border:1px solid var(--line); border-radius:10px; color:var(--txt); padding:12px 14px; font-size:15px; outline:none; }
+  input[type=text]:focus { border-color:var(--acc); }
+  button { background:var(--acc); color:#06280f; border:0; border-radius:10px; padding:12px 22px; font-size:15px; font-weight:700; cursor:pointer; }
+  button:disabled { opacity:.45; cursor:wait; }
+  button.ghost { background:transparent; color:var(--acc); border:1px solid var(--acc); padding:7px 16px; font-size:13.5px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-top:18px; }
+  .site { color:var(--acc); font-size:12.5px; font-weight:700; letter-spacing:.4px; }
+  .title { font-size:16.5px; font-weight:600; margin:3px 0 12px; word-break:break-all; }
+  .item { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:9px 0; border-top:1px solid var(--line); }
+  .item:first-of-type { border-top:0; }
+  .label { color:var(--txt); font-size:14px; }
+  .kind { color:var(--dim); font-size:12px; margin-left:8px; }
+  .bar { height:10px; background:#0a0e12; border-radius:6px; overflow:hidden; margin:8px 0 4px; }
+  .fill { height:100%; width:0%; background:var(--acc); transition:width .25s; }
+  .meta { color:var(--dim); font-size:12.5px; word-break:break-all; }
+  .err { color:var(--err); }
+  .hidden { display:none; }
+  #msg { margin-top:14px; min-height:22px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎬 VideoGrab <span style="font-size:14px;color:var(--dim)">桌面版 v0.2</span></h1>
+  <p class="sub">粘贴视频链接 → 解析 → 下载。支持 X / 抖音 / Bilibili / YouTube 与通用 MP4、HLS。全程本地运行，零数据收集。<br>文件保存到：<span id="outdir">…</span></p>
+  <div class="row">
+    <input type="text" id="url" placeholder="粘贴链接，如 https://x.com/…/status/… 或 B站/YouTube/抖音链接" autofocus>
+    <button id="go">解析</button>
+  </div>
+  <div id="msg" class="meta"></div>
+
+  <div id="player" class="card hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span class="site">▶ 正在播放</span>
+      <button class="ghost" id="p-close">关闭</button>
+    </div>
+    <video id="video" controls playsinline style="width:100%;border-radius:8px;background:#000" src=""></video>
+    <div class="meta" id="p-name" style="margin-top:8px"></div>
+  </div>
+
+  <div id="result" class="card hidden">
+    <div class="site" id="r-site"></div>
+    <div class="title" id="r-title"></div>
+    <div id="r-items"></div>
+  </div>
+
+  <div id="tasks"></div>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+let curToken = null;
+
+fetch("/api/info").then(r => r.json()).then(d => { $("outdir").textContent = d.outDir; }).catch(() => {});
+
+$("url").addEventListener("keydown", (e) => { if (e.key === "Enter") $("go").click(); });
+$("go").addEventListener("click", async () => {
+  const url = $("url").value.trim();
+  if (!url) return;
+  $("go").disabled = true;
+  $("msg").textContent = "解析中…（直连视频平台，可能要几秒）";
+  $("msg").classList.remove("err");
+  try {
+    const r = await (await fetch("/api/resolve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) })).json();
+    if (!r.ok) throw new Error(r.error || "解析失败");
+    curToken = r.token;
+    $("r-site").textContent = r.site;
+    $("r-title").textContent = r.title;
+    $("r-items").innerHTML = "";
+    for (const it of r.items) {
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `<span><span class="label"></span><span class="kind"></span></span>`;
+      div.querySelector(".label").textContent = it.label;
+      div.querySelector(".kind").textContent = it.kind.toUpperCase();
+      const btns = document.createElement("span");
+      btns.style.display = "flex"; btns.style.gap = "8px";
+      if (it.kind === "mp4") {
+        const pb = document.createElement("button");
+        pb.className = "ghost"; pb.textContent = "▶ 播放";
+        pb.addEventListener("click", () => play(`/api/stream?token=${curToken}&index=${it.index}`, $("r-title").textContent));
+        btns.appendChild(pb);
+      }
+      const b = document.createElement("button");
+      b.className = "ghost"; b.textContent = "下载";
+      b.addEventListener("click", () => startDownload(it.index, b));
+      btns.appendChild(b);
+      div.appendChild(btns);
+      $("r-items").appendChild(div);
+    }
+    $("result").classList.remove("hidden");
+    $("msg").textContent = "";
+  } catch (e) {
+    $("msg").textContent = "解析失败：" + e.message;
+    $("msg").classList.add("err");
+  } finally {
+    $("go").disabled = false;
+  }
+});
+
+function play(src, name) {
+  const v = $("video");
+  v.src = src;
+  $("p-name").textContent = name || "";
+  $("player").classList.remove("hidden");
+  $("player").scrollIntoView({ behavior: "smooth", block: "center" });
+  v.play().catch(() => {});
+}
+$("p-close").addEventListener("click", () => {
+  const v = $("video");
+  v.pause(); v.removeAttribute("src"); v.load();
+  $("player").classList.add("hidden");
+});
+
+function taskCard(t) {
+  const div = document.createElement("div");
+  div.className = "card"; div.id = "task-" + t.id;
+  div.innerHTML = `<div class="title" style="margin-bottom:2px"></div>
+    <div class="meta t-label"></div>
+    <div class="bar"><div class="fill"></div></div>
+    <div class="meta t-meta">准备中…</div>`;
+  div.querySelector(".title").textContent = t.title;
+  div.querySelector(".t-label").textContent = t.label;
+  $("tasks").prepend(div);
+  return div;
+}
+
+async function startDownload(index, btn) {
+  btn.disabled = true; btn.textContent = "已开始";
+  const r = await (await fetch("/api/download", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: curToken, index }) })).json();
+  if (!r.ok) { alert(r.error || "启动下载失败"); btn.disabled = false; btn.textContent = "下载"; return; }
+  const card = taskCard({ id: r.taskId, title: $("r-title").textContent, label: "" });
+  const fill = card.querySelector(".fill"), meta = card.querySelector(".meta.t-meta"), labelEl = card.querySelector(".t-label");
+  const es = new EventSource("/api/events/" + r.taskId);
+  es.onmessage = (ev) => {
+    const t = JSON.parse(ev.data);
+    labelEl.textContent = t.label;
+    fill.style.width = (t.percent || 0) + "%";
+    if (t.status === "done") {
+      meta.textContent = "✅ 已保存：" + t.file;
+      if (!card.querySelector(".play-btn")) {
+        const pb = document.createElement("button");
+        pb.className = "ghost play-btn"; pb.textContent = "▶ 播放"; pb.style.marginTop = "8px";
+        const base = t.file.split(/[\\/]/).pop();
+        pb.addEventListener("click", () => play("/api/file?name=" + encodeURIComponent(base), t.title));
+        card.appendChild(pb);
+      }
+      es.close();
+    } else if (t.status === "error") {
+      meta.innerHTML = ""; meta.classList.add("err"); meta.textContent = "❌ " + t.error;
+      es.close();
+    } else {
+      const mb = t.total ? ` · ${(t.downloaded/1048576).toFixed(1)}/${(t.total/1048576).toFixed(1)} MB` : (t.downloaded ? ` · ${(t.downloaded/1048576).toFixed(1)} MB` : "");
+      meta.textContent = `${t.status === "merging" ? "合并中" : "下载中"} ${t.percent || 0}%${mb}${t.speed ? " · " + t.speed : ""}`;
+    }
+  };
+  es.onerror = () => {};
+}
+</script>
+</body>
+</html>

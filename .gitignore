@@ -1,5 +1,10 @@
 .build-chrome/
 .build-firefox/
 dist/
+desktop/dist/
+desktop/downloads/
 *.zip
+*.exe
+*.blob
+*.bak
 .DS_Store

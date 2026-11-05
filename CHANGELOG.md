@@ -3,6 +3,12 @@
 All notable changes to VideoGrab. Versions follow the extension's
 `manifest.json` version.
 
+## [Desktop 0.2.0] — 2026-11-05
+
+- Added standalone Desktop App (`desktop/` and Windows single-file `.exe` via Node SEA + bundled `ffmpeg`).
+- Supports paste-to-resolve and download for X/Twitter, Douyin, Bilibili, YouTube, and generic MP4/HLS URLs.
+- Unlocks 1080p/4K adaptive (DASH) video+audio merging via `ffmpeg` for YouTube and Bilibili, plus online range-proxied preview (`/api/stream`) and local playback (`/api/file`).
+
 ## [0.1.3] — 2026-10-30
 
 - Added Bilibili resolver: official API chain (view → playurl, HTML5 MP4

@@ -57,12 +57,22 @@ GitHub:
 
 ### Firefox
 
-Install from Firefox Add-ons (AMO) once the listing is live — search
-"VideoGrab" on addons.mozilla.org. For a manual test install meanwhile:
+Install from [Firefox Add-ons (AMO)](https://addons.mozilla.org/addon/videograb-video-downloader/). For a manual test install:
 download `videograb-firefox-v*.zip`, then in Firefox open
 `about:debugging` → **This Firefox** → **Load Temporary Add-on** and
 pick the zip. (Temporary add-ons are removed when Firefox restarts;
 the AMO build does not have this limitation.)
+
+### Desktop App (Windows / macOS / Linux — v0.2)
+
+For downloading up to 1080p/4K adaptive (DASH) streams on YouTube and Bilibili with automatic `ffmpeg` merging and local preview:
+
+- **Windows standalone `.exe`**: Download `VideoGrab-Desktop-v0.2-Windows.exe` from [Releases](https://github.com/billgaohub/videograb/releases) and double-click to run (extracts bundled `ffmpeg.exe` on first launch and opens `http://127.0.0.1:17890/`).
+- **From source (macOS / Linux / Windows)**:
+  ```bash
+  cd desktop && node server.js   # requires Node 18+ and ffmpeg in PATH
+  ```
+  See [`desktop/README.md`](desktop/README.md) for details.
 
 ## How it works
 
@@ -135,8 +145,15 @@ X/Twitter（最高 4K、带声音的直链 MP4）、抖音、Bilibili、YouTube�
 3. 点「加载已解压的扩展程序」，选择解压出的文件夹；
 4. 打开有视频的页面，先点播放，再点插件图标即可下载。
 
-Firefox 版可通过 Firefox Add-ons (AMO) 安装（上架后），或用
+Firefox 版可通过 [Firefox Add-ons (AMO)](https://addons.mozilla.org/addon/videograb-video-downloader/) 安装，或用
 `about:debugging` 临时加载 `videograb-firefox-v*.zip` 测试。
+
+## 桌面版（Windows 单文件 EXE / 跨平台源码 — v0.2）
+
+桌面版支持粘贴链接直接解析下载（X / 抖音 / Bilibili / YouTube 及通用 MP4/HLS），内置 `ffmpeg` 双流合并（解锁 YouTube 1080p/4K 与 B 站 DASH 高清合并）及在线流式预览：
+
+- **Windows 免安装单文件版**：前往 [Releases](https://github.com/billgaohub/videograb/releases) 下载 `VideoGrab-Desktop-v0.2-Windows.exe` 双击即可运行（自带 `ffmpeg`）。
+- **源码运行（macOS / Linux / Windows）**：`cd desktop && node server.js`（需 Node 18+ 与 `ffmpeg`），详见 [`desktop/README.md`](desktop/README.md)。
 
 ## 已知上限（提 issue 前先看）
 
