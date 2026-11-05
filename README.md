@@ -1,5 +1,7 @@
 # VideoGrab — Free Video Downloader
 
+<a href="https://siflie.com/launches/videograb/"><img src="https://siflie.com/badges/featured-on-si-fly.png" alt="Featured on SI Fly" width="220" height="44"></a>
+
 An open-source browser extension that detects videos playing in your
 browser and downloads them: X/Twitter in up to 4K with audio, Douyin,
 Bilibili, YouTube, plus generic MP4/WebM and HLS streams on most sites.
